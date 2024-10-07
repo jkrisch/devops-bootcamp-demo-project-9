@@ -15,7 +15,7 @@ pipeline {
     }
     
    environment{
-    IMAGE_NAME = "jaykay84/demo-app:maven-1.0"
+    IMAGE_NAME = "jaykay84/demo-app"
     ELASTIC_IP = "18.184.8.248"
    }
     stages {
@@ -23,6 +23,22 @@ pipeline {
             steps {
                 script {
                     buildJar()
+                }
+            }
+        }
+
+        stage('increment version'){
+            steps{
+                script{
+                    echo 'incrementing app version...'
+                    sh 'mvn build-helper:parse-version versions:set \
+                    -DnewVersion=\\\${parsedVersion.majorVersion}.\\\${parsedVersion.minorVersion}.\\\${parsedVersion.nextIncrementalVersion} \
+                    versions:commit'
+
+                    //read the new version from the pom.xml
+                    def matcher = readFile('pom.xml') =~ '<version>(.+?)</version>'
+                    def version = matcher[0][1]
+                    env.TAG = "$version-$BUILD_NUMBER"
                 }
             }
         }
@@ -35,9 +51,9 @@ pipeline {
                         ]){
                             dockerLogin(USER, PASS)
 
-                            buildImage("jaykay84", "demo-app", "maven-1.0")
+                            buildImage("jaykay84", "demo-app", "${env.TAG}")
 
-                            dockerPush("jaykay84", "demo-app", "maven-1.0")
+                            dockerPush("jaykay84", "demo-app", "${env.TAG}")
                         }
                 }
             }
@@ -56,7 +72,7 @@ pipeline {
             steps {
                 script {
                     echo 'deploying docker image to EC2...'
-                    def shellCommand = "bash ./server-cmds.sh"
+                    def shellCommand = "bash ./server-cmds.sh ${IMAGE_NAME}:${env.TAG}"
                     sshagent(['ec2-server-key']) {
                         sh "scp server-cmds.sh ec2-user@${ELASTIC_IP}:"
                         sh "scp compose.yaml ec2-user@${ELASTIC_IP}:"
@@ -64,6 +80,30 @@ pipeline {
                     }
                 }
 
+            }
+        }
+
+        stage('commit version update'){
+            steps{
+                script{
+                    withCredentials([
+                        usernamePassword(credentialsId:'github-login', passwordVariable: 'PASS', usernameVariable: 'USER')
+                ]){
+                    sh '''
+                        git config user.email jenkins@example.com
+                        git config user.name jenkins-automation
+                        git status
+                        git branch
+                        git config --list
+                    '''
+                    
+                    sh "git remote set-url origin https://${USER}:${PASS}@github.com/jkrisch//devops-bootcamp-demo-project-9.git"
+                    
+                    sh 'git add pom.xml'
+                    sh 'git commit -m "ci: version bump"'
+                    sh 'git push origin HEAD:increment-version'
+                }
+                }
             }
         }
     }
