@@ -1,6 +1,13 @@
-version: "3.7"
+version: "3.8"
 services:
   my-app:
     image: jaykay84/demo-app:maven-1.0
     ports:
       - 8080:8080
+
+  postgres_db:
+    image: postgres:15
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=my-pwd
