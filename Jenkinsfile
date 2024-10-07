@@ -15,7 +15,7 @@ pipeline {
     }
     
    environment{
-    IMAGE_NAME = "jaykay84/java-demo-app:1.0"
+    IMAGE_NAME = "jaykay84/demo-app:maven-1.0"
     ELASTIC_IP = "18.184.8.248"
    }
     stages {
@@ -56,7 +56,7 @@ pipeline {
             steps {
                 script {
                     echo 'deploying docker image to EC2...'
-                    def dockerCmd = "docker run -p 3080:3080 -d ${IMAGE_NAME}"
+                    def dockerCmd = "docker run -p 8080:8080 -d ${IMAGE_NAME}"
                     sshagent(['ec2-server-key']) {
                         sh "ssh -o StrictHostKeyChecking=no ec2-user@${ELASTIC_IP} ${dockerCmd}"
                     }
