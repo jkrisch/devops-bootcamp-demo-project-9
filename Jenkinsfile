@@ -59,7 +59,7 @@ pipeline {
                     def dockerCmd = "docker-compose -d up"
                     sshagent(['ec2-server-key']) {
                         sh "scp compose.yaml ec2-user@${ELASTIC_IP}:"
-                        sh "ssh -o StrictHostKeyChecking=no ec2-user@${ELASTIC_IP}"
+                        sh "ssh -o StrictHostKeyChecking=no ec2-user@${ELASTIC_IP} ${dockerCmd}"
                     }
                 }
 
