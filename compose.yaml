@@ -1,0 +1,6 @@
+version: "3.7"
+services:
+  my-app:
+    image: jaykay84/demo-app:maven-1.0
+    ports:
+      - 8080:8080
