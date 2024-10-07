@@ -35,9 +35,9 @@ pipeline {
                         ]){
                             dockerLogin(USER, PASS)
 
-                            buildImage("jaykay84", "java-demo-app", "1.0")
+                            buildImage("jaykay84", "demo-app", "maven-1.0")
 
-                            dockerPush("jaykay84", "java-demo-app", "1.0")
+                            dockerPush("jaykay84", "demo-app", "maven-1.0")
                         }
                 }
             }
